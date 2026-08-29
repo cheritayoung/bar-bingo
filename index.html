@@ -4,24 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bar Bingo — Cherita & Candyse Birthday Edition</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,600&family=Space+Grotesk:wght@400;500;600&display=swap');
 
   :root{
-    --ink:#1a1a1a;
-    --paper:#faf7f0;
-    --line: rgba(26,26,26,0.85);
-    --line-soft: rgba(26,26,26,0.22);
-    --mark:#1a1a1a;
+    --ink:#211320;
+    --paper:#fdf6ec;
+    --gold:#c9972e;
+    --gold-deep:#a8781c;
+    --berry:#a13356;
+    --emerald:#1f6b53;
+    --line: rgba(33,19,32,0.85);
+    --line-soft: rgba(33,19,32,0.2);
   }
 
   *{box-sizing:border-box;}
+  html{ overflow-x:hidden; }
 
   body{
     margin:0;
     padding:18px 12px 50px;
     min-height:100vh;
-    background:var(--paper);
+    width:100%;
+    overflow-x:hidden;
+    background:
+      radial-gradient(circle at 10% 6%, rgba(161,51,86,0.10), transparent 40%),
+      radial-gradient(circle at 92% 94%, rgba(31,107,83,0.10), transparent 45%),
+      var(--paper);
     font-family:'Space Grotesk', sans-serif;
     color:var(--ink);
     display:flex;
@@ -32,19 +42,35 @@
   .frame{
     width:100%;
     max-width:520px;
+    box-sizing:border-box;
     border:2px solid var(--ink);
     padding:5px;
+    position:relative;
+    overflow:hidden;
   }
   .frame-inner{
-    border:1px solid var(--ink);
-    padding:22px 16px 26px;
+    border:1px solid var(--gold);
+    padding:26px 16px 26px;
+    position:relative;
+    overflow:hidden;
+    background:var(--paper);
+  }
+
+  .confetti{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
   }
 
   .glass{
     display:block;
     margin:0 auto 8px;
-    width:34px;
-    height:34px;
+    width:36px;
+    height:36px;
+    color:var(--gold-deep);
+    position:relative;
+    z-index:1;
   }
 
   h1{
@@ -52,10 +78,13 @@
     font-weight:700;
     font-style:italic;
     text-align:center;
-    font-size:clamp(24px, 6.5vw, 32px);
-    line-height:1.05;
+    font-size:clamp(23px, 6.2vw, 31px);
+    line-height:1.08;
     margin:0 0 10px;
     letter-spacing:0.01em;
+    color:var(--ink);
+    position:relative;
+    z-index:1;
   }
 
   .rule{
@@ -64,26 +93,37 @@
     gap:10px;
     max-width:340px;
     margin:0 auto 14px;
+    position:relative;
+    z-index:1;
   }
-  .rule .line{ flex:1; height:1px; background:var(--line); }
+  .rule .line{ flex:1; height:1px; background:linear-gradient(90deg, transparent, var(--gold-deep), transparent); }
   .rule .diamond{
-    width:6px; height:6px; background:var(--ink); transform:rotate(45deg);
+    width:7px; height:7px; background:var(--berry);
+    transform:rotate(45deg);
+    flex-shrink:0;
   }
 
   .sub{
     text-align:center;
     font-size:12.5px;
     line-height:1.55;
-    opacity:0.75;
+    opacity:0.78;
     max-width:400px;
     margin:0 auto 18px;
+    position:relative;
+    z-index:1;
+  }
+
+  .name-wrap{
+    position:relative;
+    z-index:1;
+    max-width:260px;
+    margin:0 auto 6px;
   }
 
   #name-tag{
     display:block;
     width:100%;
-    max-width:260px;
-    margin:0 auto 18px;
     text-align:center;
     background:transparent;
     border:none;
@@ -95,14 +135,31 @@
     padding:5px 4px;
     outline:none;
   }
-  #name-tag::placeholder{ color:rgba(26,26,26,0.4); }
-  #name-tag:focus{ border-bottom-color:var(--ink); }
+  #name-tag::placeholder{ color:rgba(33,19,32,0.4); }
+  #name-tag:focus{ border-bottom-color:var(--berry); }
+  #name-tag.needs-name{ border-bottom-color:var(--berry); }
+
+  .name-hint{
+    text-align:center;
+    font-size:10.5px;
+    color:var(--berry);
+    margin:0 0 12px;
+    min-height:13px;
+    opacity:0;
+    transition:opacity 0.15s ease;
+    position:relative;
+    z-index:1;
+  }
+  .name-hint.show{ opacity:1; }
 
   .board{
     display:grid;
     grid-template-columns:repeat(5, 1fr);
     gap:0;
     border:1px solid var(--ink);
+    position:relative;
+    z-index:1;
+    width:100%;
   }
 
   .cell{
@@ -116,8 +173,10 @@
     padding:6px;
     cursor:pointer;
     -webkit-tap-highlight-color:transparent;
-    background:var(--paper);
+    background:#fffdf9;
     transition:background 0.2s ease;
+    min-width:0;
+    overflow:hidden;
   }
 
   .cell span{
@@ -125,20 +184,23 @@
     line-height:1.28;
     font-weight:500;
     color:var(--ink);
+    overflow-wrap:break-word;
+    word-break:break-word;
+    hyphens:auto;
+    max-width:100%;
   }
 
-  .cell.free{ border:1.5px solid var(--ink); }
+  .cell.free{ border:1.5px solid var(--gold-deep); background:linear-gradient(150deg, #f3dfa8, var(--gold)); }
   .cell.free span{
     font-family:'Fraunces', serif;
     font-style:italic;
     font-weight:700;
     font-size:clamp(11px,3vw,14px);
+    color:var(--ink);
   }
 
-  .cell.marked{ background:var(--ink); }
-  .cell.marked span{ color:var(--paper); opacity:0.35; }
-  .cell.marked.free span{ color:var(--ink); opacity:1; }
-  .cell.marked.free{ background:var(--paper); }
+  .cell.marked:not(.free){ background:var(--berry); }
+  .cell.marked:not(.free) span{ color:var(--paper); opacity:0.4; }
 
   .stamp{
     position:absolute;
@@ -150,20 +212,29 @@
     opacity:0;
     transition:opacity 0.15s ease;
   }
-  .stamp svg{ width:58%; height:58%; }
-  .cell.marked:not(.free) .stamp{ opacity:0.9; }
+  .stamp svg{ width:56%; height:56%; }
+  .cell.marked:not(.free) .stamp{ opacity:0.95; }
 
   .footer-row{
     display:flex;
-    justify-content:space-between;
+    justify-content:center;
     align-items:center;
-    margin-top:20px;
+    margin-top:18px;
     gap:10px;
+    position:relative;
+    z-index:1;
   }
 
   .status{ font-size:11.5px; opacity:0.7; }
 
-  .btns{ display:flex; gap:8px; }
+  .btn-row{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:12px;
+    position:relative;
+    z-index:1;
+  }
 
   button.action{
     font-family:'Space Grotesk', sans-serif;
@@ -171,20 +242,31 @@
     font-weight:600;
     letter-spacing:0.02em;
     background:transparent;
-    border:1px solid var(--ink);
-    color:var(--ink);
-    padding:8px 13px;
+    border:1px solid var(--berry);
+    color:var(--berry);
+    padding:9px 16px;
     cursor:pointer;
-    transition:background 0.2s ease, color 0.2s ease;
+    transition:background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
   }
-  button.action:hover{ background:var(--ink); color:var(--paper); }
+  button.action:hover{ background:var(--berry); color:var(--paper); }
+
+  button.action.primary{
+    background:var(--berry);
+    color:var(--paper);
+    border:1px solid var(--berry);
+  }
+  button.action.primary:hover{ background:var(--gold-deep); border-color:var(--gold-deep); }
+  button.action:disabled{ opacity:0.55; cursor:default; }
 
   .bingo-banner{
     display:none;
     text-align:center;
     margin-top:20px;
     padding:14px;
-    border:1.5px solid var(--ink);
+    border:1.5px solid var(--berry);
+    background:rgba(161,51,86,0.06);
+    position:relative;
+    z-index:1;
   }
   .bingo-banner.show{ display:block; }
   .bingo-banner p{
@@ -193,27 +275,72 @@
     font-style:italic;
     font-weight:700;
     font-size:18px;
+    color:var(--berry);
   }
 
-  .playing-as{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-top:22px;
-    font-size:12.5px;
+  .submit-note{
+    text-align:center;
+    font-size:10.5px;
+    opacity:0.55;
+    margin-top:10px;
+    position:relative;
+    z-index:1;
+    min-height:13px;
   }
-  .playing-as svg{ width:16px; height:16px; flex-shrink:0; }
-  .playing-as .fill{
-    flex:1;
-    border-bottom:1px solid var(--line);
-    padding-bottom:2px;
-    min-height:16px;
+  .submit-note.success{ color:var(--emerald); opacity:1; font-weight:600; }
+  .submit-note.error{ color:var(--berry); opacity:1; font-weight:600; }
+
+  .save-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(26,15,25,0.82);
+    z-index:999;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .save-modal.show{ display:flex; }
+  .save-modal-inner{
+    background:var(--paper);
+    border:2px solid var(--ink);
+    padding:18px;
+    max-width:400px;
+    width:100%;
+    text-align:center;
+  }
+  .save-modal-inner img{
+    display:block;
+    width:100%;
+    height:auto;
+    border:1px solid var(--gold);
+    margin-bottom:14px;
+    -webkit-touch-callout:default;
+  }
+  .save-modal-inner p{
+    font-size:12.5px;
+    line-height:1.5;
+    margin:0 0 16px;
+    color:var(--ink);
   }
 </style>
 </head>
 <body>
 <div class="frame">
-<div class="frame-inner">
+<div class="frame-inner" id="capture-area">
+
+  <svg class="confetti" viewBox="0 0 500 700" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="30" cy="28" r="4" fill="#a13356" opacity="0.55"/>
+    <circle cx="465" cy="40" r="3" fill="#1f6b53" opacity="0.5"/>
+    <circle cx="450" cy="80" r="5" fill="#c9972e" opacity="0.5"/>
+    <rect x="20" y="60" width="6" height="6" fill="#c9972e" opacity="0.5" transform="rotate(20 23 63)"/>
+    <rect x="470" y="15" width="5" height="5" fill="#a13356" opacity="0.45" transform="rotate(35 472 17)"/>
+    <circle cx="15" cy="110" r="3" fill="#1f6b53" opacity="0.45"/>
+    <circle cx="480" cy="650" r="4" fill="#a13356" opacity="0.45"/>
+    <circle cx="25" cy="660" r="3" fill="#c9972e" opacity="0.5"/>
+    <rect x="450" y="620" width="6" height="6" fill="#1f6b53" opacity="0.4" transform="rotate(15 453 623)"/>
+    <circle cx="470" cy="680" r="3" fill="#c9972e" opacity="0.45"/>
+  </svg>
 
   <svg class="glass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
     <path d="M9 3l4 4M15 3l-4 4M12 7v6M8 15c1 1.5 2.5 2 4 2s3-.5 4-2M12 13v6M8.5 19h7"/>
@@ -226,7 +353,10 @@
 
   <p class="sub">Talk to someone new — or dig up some ancient history — and cross it off. Five in a row wins a prize.</p>
 
-  <input id="name-tag" type="text" placeholder="Playing as..." maxlength="24">
+  <div class="name-wrap">
+    <input id="name-tag" type="text" placeholder="Playing as..." maxlength="24">
+  </div>
+  <p class="name-hint" id="name-hint">Enter your name above before saving</p>
 
   <div class="board" id="board"></div>
 
@@ -234,13 +364,28 @@
 
   <div class="footer-row">
     <div class="status" id="status">0 marked</div>
-    <div class="btns">
-      <button class="action" id="shuffle">New board</button>
-      <button class="action" id="reset">Reset</button>
-    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="action" id="reset">Reset</button>
+    <button class="action primary" id="submit">Save my board</button>
+  </div>
+
+  <p class="submit-note" id="submit-note">Saves your board as an image — upload it to the Partiful photo gallery.</p>
+
+  <div class="btn-row" id="partiful-row" style="display:none; margin-top:14px;">
+    <a class="action primary" id="partiful-link" href="#" target="_blank" rel="noopener" style="text-decoration:none; display:inline-block;">Open Partiful to upload</a>
   </div>
 
 </div>
+</div>
+
+<div class="save-modal" id="save-modal">
+  <div class="save-modal-inner">
+    <img id="save-image" alt="Your completed bingo board">
+    <p>Press and hold the image above, then choose <strong>Add to Photos</strong> (iPhone) or <strong>Download image</strong> (Android).</p>
+    <button class="action" id="close-modal">Done</button>
+  </div>
 </div>
 
 <script>
@@ -271,6 +416,8 @@ const PROMPTS = [
   "Talked ___ into a questionable decision"
 ];
 
+const PARTIFUL_LINK = "https://partiful.com/e/yHSpB5di4sd5beRN7Q2J?c=1wbQ0-gl";
+
 let deck = [];
 let marked = new Set();
 
@@ -283,7 +430,7 @@ function shuffle(arr){
   return a;
 }
 
-const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#faf7f0" stroke-width="1.6"><path d="M4 13l5 5L20 6"/></svg>`;
+const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#fdf6ec" stroke-width="1.6"><path d="M4 13l5 5L20 6"/></svg>`;
 
 function buildBoard(){
   deck = shuffle(PROMPTS).slice(0,24);
@@ -338,7 +485,6 @@ function checkBingo(){
   document.getElementById('banner').classList.toggle('show', won);
 }
 
-document.getElementById('shuffle').addEventListener('click', buildBoard);
 document.getElementById('reset').addEventListener('click', () => {
   marked = new Set([12]);
   document.querySelectorAll('.cell').forEach(c => {
@@ -347,6 +493,96 @@ document.getElementById('reset').addEventListener('click', () => {
   });
   document.getElementById('banner').classList.remove('show');
   updateStatus();
+});
+
+const nameInput = document.getElementById('name-tag');
+const nameHint = document.getElementById('name-hint');
+nameInput.addEventListener('input', () => {
+  if(nameInput.value.trim()){
+    nameInput.classList.remove('needs-name');
+    nameHint.classList.remove('show');
+  }
+});
+
+const submitBtn = document.getElementById('submit');
+const submitNote = document.getElementById('submit-note');
+const partifulRow = document.getElementById('partiful-row');
+const partifulLink = document.getElementById('partiful-link');
+partifulLink.href = PARTIFUL_LINK;
+
+function showPartifulButton(){
+  partifulRow.style.display = "flex";
+}
+
+document.getElementById('close-modal').addEventListener('click', () => {
+  document.getElementById('save-modal').classList.remove('show');
+});
+
+submitBtn.addEventListener('click', async () => {
+  const nameVal = nameInput.value.trim();
+  if(!nameVal){
+    nameInput.classList.add('needs-name');
+    nameHint.classList.add('show');
+    nameInput.focus();
+    return;
+  }
+
+  submitBtn.disabled = true;
+  const originalLabel = submitBtn.textContent;
+  submitBtn.textContent = "Preparing...";
+  submitNote.className = "submit-note";
+  submitNote.textContent = "Capturing your board...";
+
+  try{
+    const target = document.getElementById('capture-area');
+    const canvas = await html2canvas(target, {
+      backgroundColor: "#fdf6ec",
+      scale: 2,
+      useCORS: true
+    });
+
+    canvas.toBlob(async (blob) => {
+      const fileName = `bingo-${nameVal.replace(/\s+/g, "-").toLowerCase()}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      let handled = false;
+      if(navigator.canShare && navigator.canShare({ files: [file] })){
+        try{
+          await navigator.share({
+            files: [file],
+            title: "Bar Bingo — completed board",
+            text: `${nameVal}'s completed bingo board`
+          });
+          handled = true;
+          submitNote.className = "submit-note success";
+          submitNote.textContent = "If you chose Save Image, it's in your Photos — now upload it to Partiful.";
+          showPartifulButton();
+        }catch(shareErr){
+          // user cancelled the share sheet — fall through to direct download
+        }
+      }
+
+      if(!handled){
+        const dataUrl = canvas.toDataURL("image/png");
+        const saveImage = document.getElementById('save-image');
+        const saveModal = document.getElementById('save-modal');
+        saveImage.src = dataUrl;
+        saveModal.classList.add('show');
+        submitNote.className = "submit-note success";
+        submitNote.textContent = "Ready — save the image below, then upload it to the Partiful photo gallery.";
+        showPartifulButton();
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalLabel;
+    }, "image/png");
+
+  }catch(err){
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalLabel;
+    submitNote.className = "submit-note error";
+    submitNote.textContent = "Couldn't capture the board — try again.";
+  }
 });
 
 buildBoard();

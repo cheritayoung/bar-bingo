@@ -372,7 +372,7 @@ const PROMPTS = [
 
 // ⚠️ Replace this with your real Formspree endpoint before deploying —
 // e.g. "https://formspree.io/f/abcdwxyz" — from your Formspree form's dashboard.
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/moeqvppr";
 
 let deck = [];
 let marked = new Set();
@@ -504,11 +504,18 @@ submitBtn.addEventListener('click', async () => {
           submitNote.className = "submit-note success";
           submitNote.textContent = "Sent! Your board is on its way to Cherita.";
         } else {
-          throw new Error("Formspree responded with an error");
+          let detail = `status ${response.status}`;
+          try{
+            const errJson = await response.json();
+            if(errJson && errJson.errors && errJson.errors.length){
+              detail = errJson.errors.map(e => e.message).join("; ");
+            }
+          }catch(parseErr){ /* ignore, keep status detail */ }
+          throw new Error(detail);
         }
       }catch(sendErr){
         submitNote.className = "submit-note error";
-        submitNote.textContent = "Couldn't send — check your connection and try again.";
+        submitNote.textContent = "Couldn't send: " + sendErr.message;
       }
 
       submitBtn.disabled = false;
